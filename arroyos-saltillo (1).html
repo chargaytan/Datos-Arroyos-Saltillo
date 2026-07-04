@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="es-MX">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Arroyos de Saltillo — Catastro hidrológico</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,340..600&family=IBM+Plex+Mono:wght@400;500;600&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #ffffff;
+    --bg-2: #ffffff;
+    --surface: #f6f6f3;
+    --surface-2: #ececE7;
+    --line: #111111;
+    --line-soft: #d6d6d0;
+    --ink: #0a0a0a;
+    --ink-dim: #45443e;
+    --ink-faint: #68665c;
+
+    --c-inter: #b8641d;
+    --c-inter-soft: #b8641d1c;
+    --c-virtual: #57534a;
+    --c-virtual-soft: #57534a1a;
+    --c-activo: #0e7490;
+    --c-activo-soft: #0e74901e;
+
+    --tooltip-bg: #0a0a0a;
+    --tooltip-ink: #ffffff;
+    --tooltip-ink-dim: #cfcec8;
+
+    --radius: 3px;
+    --font-display: "Fraunces", serif;
+    --font-mono: "IBM Plex Mono", monospace;
+    --font-body: "Public Sans", sans-serif;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    line-height:1.5;
+  }
+
+  ::selection{ background:var(--c-inter-soft); color:var(--ink); }
+
+  a{color:inherit;}
+  button{font-family:inherit;}
+
+  :focus-visible{
+    outline:2px solid var(--c-activo);
+    outline-offset:2px;
+  }
+
+  .wrap{
+    max-width:1040px;
+    margin:0 auto;
+    padding:56px 24px 40px;
+  }
+
+  /* ---------- HERO ---------- */
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:11px;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--c-inter);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:"";
+    width:22px;
+    height:1px;
+    background:var(--c-inter);
+    display:inline-block;
+  }
+
+  h1{
+    font-family:var(--font-display);
+    font-optical-sizing:auto;
+    font-weight:480;
+    font-size:clamp(2.4rem, 6vw, 4.2rem);
+    line-height:0.98;
+    margin:0 0 20px;
+    color:var(--ink);
+    letter-spacing:-.01em;
+  }
+  h1 em{
+    font-style:italic;
+    font-weight:340;
+    color:var(--ink-dim);
+  }
+
+  .dek{
+    max-width:56ch;
+    font-size:16px;
+    color:var(--ink-dim);
+    margin:0 0 40px;
+  }
+  .dek strong{ color:var(--ink); font-weight:600; }
+
+  .stats-row{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    border-top:1px solid var(--line);
+    border-bottom:1px solid var(--line);
+    margin-bottom:48px;
+  }
+  .stat{
+    padding:18px 20px 18px 0;
+    border-right:1px solid var(--line);
+  }
+  .stat:last-child{ border-right:none; padding-right:0; }
+  .stat:not(:first-child){ padding-left:20px; }
+  .stat-value{
+    font-family:var(--font-mono);
+    font-size:clamp(1.4rem, 3vw, 1.9rem);
+    font-weight:500;
+    color:var(--ink);
+    display:block;
+    line-height:1.1;
+  }
+  .stat-value span.unit{
+    font-size:.5em;
+    color:var(--ink-faint);
+    margin-left:4px;
+  }
+  .stat-label{
+    font-size:12.5px;
+    color:var(--ink-faint);
+    margin-top:6px;
+    display:block;
+  }
+
+  /* ---------- CORE SAMPLE (signature) ---------- */
+  .core-panel{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:28px 24px 20px;
+    margin-bottom:14px;
+  }
+  .core-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:22px;
+  }
+  .core-title{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+  }
+  .core-sub{
+    font-size:12px;
+    color:var(--ink-faint);
+    font-family:var(--font-mono);
+  }
+
+  .core-sample{
+    display:flex;
+    align-items:flex-end;
+    gap:2px;
+    height:180px;
+    overflow-x:auto;
+    overflow-y:hidden;
+    padding-bottom:4px;
+    scrollbar-width:thin;
+    scrollbar-color:var(--line) transparent;
+  }
+  .core-sample::-webkit-scrollbar{ height:6px; }
+  .core-sample::-webkit-scrollbar-thumb{ background:var(--line); border-radius:4px; }
+
+  .core-bar{
+    flex:0 0 auto;
+    width:11px;
+    min-width:11px;
+    border-radius:2px 2px 0 0;
+    cursor:pointer;
+    position:relative;
+    transition:opacity .15s ease, transform .15s ease, filter .15s ease;
+    opacity:.88;
+  }
+  .core-bar[data-cond="INTERMITENTE"]{ background:var(--c-inter); }
+  .core-bar[data-cond="FLUJO VIRTUAL"]{ background:var(--c-virtual); }
+  .core-bar[data-cond="EN OPERACION"]{
+    background:linear-gradient(180deg, #23a5c2, var(--c-activo));
+    box-shadow:0 0 12px 0 #0e749055;
+  }
+  .core-bar:hover, .core-bar.is-active{
+    opacity:1;
+    transform:scaleX(1.4);
+    filter:brightness(1.15);
+  }
+  .core-bar.is-dim{ opacity:.18; }
+
+  @media (prefers-reduced-motion: no-preference){
+    .core-bar[data-cond="EN OPERACION"]{
+      animation: pulse-water 3.4s ease-in-out infinite;
+    }
+  }
+  @keyframes pulse-water{
+    0%,100%{ box-shadow:0 0 8px 0 #0e749040; }
+    50%{ box-shadow:0 0 16px 2px #0e749070; }
+  }
+
+  .core-foot{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--ink-faint);
+    margin-top:8px;
+    padding-top:8px;
+    border-top:1px dashed var(--line-soft);
+  }
+
+  .tooltip{
+    position:fixed;
+    pointer-events:none;
+    background:var(--tooltip-bg);
+    border:1px solid #2c2c2c;
+    border-radius:3px;
+    padding:9px 12px;
+    font-size:12.5px;
+    z-index:50;
+    opacity:0;
+    transform:translate(-50%, -100%);
+    transition:opacity .1s ease;
+    max-width:220px;
+    box-shadow:0 8px 24px -8px #00000066;
+  }
+  .tooltip.show{ opacity:1; }
+  .tooltip .tt-name{ font-weight:600; color:var(--tooltip-ink); display:block; margin-bottom:2px; }
+  .tooltip .tt-meta{ font-family:var(--font-mono); font-size:11px; color:var(--tooltip-ink-dim); }
+
+  .core-hint{
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin:10px 2px 40px;
+    font-style:italic;
+  }
+
+  /* ---------- LEGEND / FILTERS ---------- */
+  .controls{
+    display:flex;
+    flex-wrap:wrap;
+    align-items:center;
+    gap:10px;
+    margin-bottom:20px;
+  }
+  .chip{
+    display:inline-flex;
+    align-items:center;
+    gap:7px;
+    padding:7px 12px 7px 10px;
+    border:1px solid var(--line);
+    border-radius:20px;
+    background:var(--surface);
+    font-size:12.5px;
+    color:var(--ink-dim);
+    cursor:pointer;
+    user-select:none;
+    transition:border-color .15s ease, color .15s ease, background .15s ease;
+  }
+  .chip .dot{ width:8px; height:8px; border-radius:50%; flex:0 0 auto; }
+  .chip[data-cond="INTERMITENTE"] .dot{ background:var(--c-inter); }
+  .chip[data-cond="FLUJO VIRTUAL"] .dot{ background:var(--c-virtual); }
+  .chip[data-cond="EN OPERACION"] .dot{ background:var(--c-activo); }
+  .chip .n{ font-family:var(--font-mono); color:var(--ink-faint); }
+  .chip.is-active{ border-color:var(--ink-faint); color:var(--ink); background:var(--surface-2); }
+  .chip:hover{ color:var(--ink); }
+
+  .search-wrap{
+    margin-left:auto;
+    position:relative;
+    flex:0 0 auto;
+  }
+  .search-wrap input{
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:20px;
+    color:var(--ink);
+    padding:8px 14px 8px 32px;
+    font-size:13px;
+    font-family:var(--font-body);
+    width:190px;
+    transition:width .2s ease, border-color .15s ease;
+  }
+  .search-wrap input:focus{ width:230px; border-color:var(--ink-faint); }
+  .search-wrap input::placeholder{ color:var(--ink-faint); }
+  .search-wrap svg{
+    position:absolute;
+    left:11px; top:50%;
+    transform:translateY(-50%);
+    width:13px; height:13px;
+    color:var(--ink-faint);
+    pointer-events:none;
+  }
+
+  .sort-toggle{
+    display:flex;
+    border:1px solid var(--line);
+    border-radius:20px;
+    overflow:hidden;
+  }
+  .sort-toggle button{
+    background:var(--surface);
+    color:var(--ink-faint);
+    border:none;
+    padding:8px 14px;
+    font-size:12.5px;
+    cursor:pointer;
+    transition:background .15s ease, color .15s ease;
+  }
+  .sort-toggle button.is-active{ background:var(--surface-2); color:var(--ink); }
+  .sort-toggle button:not(:last-child){ border-right:1px solid var(--line); }
+
+  /* ---------- LIST ---------- */
+  .list-panel{
+    border-top:1px solid var(--line);
+  }
+  .row{
+    display:grid;
+    grid-template-columns:32px minmax(0,1fr) 96px 88px;
+    align-items:center;
+    gap:16px;
+    padding:11px 4px;
+    border-bottom:1px solid var(--line-soft);
+    cursor:pointer;
+    transition:background .12s ease;
+  }
+  .row:hover, .row.is-active{ background:var(--surface); }
+  .row.is-hidden{ display:none; }
+
+  .row-rank{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--ink-faint);
+  }
+  .row-main{ min-width:0; }
+  .row-name{
+    font-size:14.5px;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    margin-bottom:5px;
+  }
+  .row-bar-track{
+    height:4px;
+    background:var(--line-soft);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .row-bar-fill{
+    height:100%;
+    border-radius:2px;
+  }
+  .row-bar-fill[data-cond="INTERMITENTE"]{ background:var(--c-inter); }
+  .row-bar-fill[data-cond="FLUJO VIRTUAL"]{ background:var(--c-virtual); }
+  .row-bar-fill[data-cond="EN OPERACION"]{ background:var(--c-activo); }
+
+  .row-cond{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.03em;
+    text-transform:uppercase;
+    padding:3px 8px;
+    border-radius:20px;
+    text-align:center;
+    white-space:nowrap;
+  }
+  .row-cond[data-cond="INTERMITENTE"]{ color:var(--c-inter); background:var(--c-inter-soft); }
+  .row-cond[data-cond="FLUJO VIRTUAL"]{ color:var(--c-virtual); background:var(--c-virtual-soft); }
+  .row-cond[data-cond="EN OPERACION"]{ color:var(--c-activo); background:var(--c-activo-soft); }
+
+  .row-km{
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--ink-dim);
+    text-align:right;
+  }
+  .row-km span{ color:var(--ink-faint); font-size:10.5px; }
+
+  .empty-state{
+    padding:40px 4px;
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:13.5px;
+    display:none;
+  }
+  .empty-state.show{ display:block; }
+
+  .list-head{
+    display:grid;
+    grid-template-columns:32px minmax(0,1fr) 96px 88px;
+    gap:16px;
+    padding:0 4px 8px;
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+  }
+  .list-head .lh-km{ text-align:right; }
+  .list-head .lh-cond{ text-align:center; }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    margin-top:48px;
+    padding-top:20px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    flex-wrap:wrap;
+    gap:12px;
+    font-size:11.5px;
+    color:var(--ink-faint);
+    font-family:var(--font-mono);
+  }
+  footer .note{ max-width:60ch; }
+  footer .note strong{ color:var(--ink-dim); font-weight:500; }
+
+  /* ---------- RESPONSIVE ---------- */
+  @media (max-width:640px){
+    .wrap{ padding:36px 16px 32px; }
+    .stats-row{ grid-template-columns:1fr; }
+    .stat{ border-right:none; border-bottom:1px solid var(--line); padding:14px 0; }
+    .stat:first-child{ padding-top:0; }
+    .stat:last-child{ border-bottom:none; padding-bottom:0; }
+    .stat:not(:first-child){ padding-left:0; }
+    .core-panel{ padding:20px 16px 16px; }
+    .search-wrap{ margin-left:0; order:5; width:100%; }
+    .search-wrap input{ width:100%; }
+    .search-wrap input:focus{ width:100%; }
+    .row{ grid-template-columns:24px minmax(0,1fr) 74px; }
+    .row-km{ display:none; }
+    .list-head{ grid-template-columns:24px minmax(0,1fr) 74px; }
+    .list-head .lh-km{ display:none; }
+    footer{ flex-direction:column; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="eyebrow">Catastro hidrológico · Saltillo, Coahuila</div>
+  <h1>Arroyos de<br><em>Saltillo</em></h1>
+  <p class="dek">
+    Cincuenta y tres cauces catalogados tejen la topografía seca de la ciudad.
+    <strong>Solo uno</strong> permanece bajo gestión activa; el resto corre unos días —o nunca— al año.
+  </p>
+
+  <div class="stats-row">
+    <div class="stat">
+      <span class="stat-value" id="statTotal">53</span>
+      <span class="stat-label">arroyos catalogados</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value" id="statKm">531.7<span class="unit">km</span></span>
+      <span class="stat-label">de cauces registrados</span>
+    </div>
+    <div class="stat">
+      <span class="stat-value">1 <span class="unit">/ 53</span></span>
+      <span class="stat-label">en operación activa</span>
+    </div>
+  </div>
+
+  <div class="core-panel">
+    <div class="core-head">
+      <span class="core-title">Muestra del catastro — ordenada por longitud</span>
+      <span class="core-sub" id="coreCount">53 cauces</span>
+    </div>
+    <div class="core-sample" id="coreSample" role="img" aria-label="Gráfico de columnas de los 53 arroyos de Saltillo, ordenados de mayor a menor longitud"></div>
+    <div class="core-foot">
+      <span>MÁS LARGO →</span>
+      <span>← MÁS CORTO</span>
+    </div>
+  </div>
+  <p class="core-hint">Pasa el cursor o toca una columna para identificar el arroyo. Desliza para ver todo el catastro.</p>
+
+  <div class="controls">
+    <button class="chip is-active" data-cond="INTERMITENTE"><span class="dot"></span>Intermitente <span class="n">34</span></button>
+    <button class="chip is-active" data-cond="FLUJO VIRTUAL"><span class="dot"></span>Flujo virtual <span class="n">18</span></button>
+    <button class="chip is-active" data-cond="EN OPERACION"><span class="dot"></span>En operación <span class="n">1</span></button>
+    <div class="sort-toggle" role="group" aria-label="Ordenar lista">
+      <button class="is-active" data-sort="len">Por longitud</button>
+      <button data-sort="alpha">Alfabético</button>
+    </div>
+    <div class="search-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Buscar arroyo…" aria-label="Buscar arroyo por nombre">
+    </div>
+  </div>
+
+  <div class="list-panel">
+    <div class="list-head">
+      <span>#</span>
+      <span>Nombre</span>
+      <span class="lh-cond">Condición</span>
+      <span class="lh-km">Longitud</span>
+    </div>
+    <div id="listBody"></div>
+    <div class="empty-state" id="emptyState">Ningún arroyo coincide con tu búsqueda o filtro.</div>
+  </div>
+
+  <footer>
+    <span class="note">
+      <strong>Metodología —</strong> se excluyó del listado un registro sin nombre del catastro original (condición "perenne", longitud 916.6&nbsp;km), por ser muy probablemente un artefacto de digitalización y no un cauce identificable. Las 53 entradas restantes suman 531.7&nbsp;km.
+    </span>
+    <span>Datos: Instituto Municipal de Planeación de Saltillo (IMPLAN)</span>
+  </footer>
+
+</div>
+
+<div class="tooltip" id="tooltip">
+  <span class="tt-name" id="ttName"></span>
+  <span class="tt-meta" id="ttMeta"></span>
+</div>
+
+<script>
+const DATA = [{"n": "San Juan de la Vaqueria", "c": "FLUJO VIRTUAL", "m": 34395.8}, {"n": "A. La Laja", "c": "EN OPERACION", "m": 32216.3}, {"n": "A. Los Caballos", "c": "FLUJO VIRTUAL", "m": 28029.1}, {"n": "Puebla", "c": "INTERMITENTE", "m": 23837.5}, {"n": "Palma Gorda", "c": "INTERMITENTE", "m": 20591.0}, {"n": "A. De Flores", "c": "INTERMITENTE", "m": 18043.2}, {"n": "El Sauz", "c": "INTERMITENTE", "m": 17556.9}, {"n": "A. El Chapulin", "c": "INTERMITENTE", "m": 17340.3}, {"n": "A. La Encantada", "c": "INTERMITENTE", "m": 16038.8}, {"n": "A. San Lorenzo", "c": "INTERMITENTE", "m": 15871.9}, {"n": "A. El Indio", "c": "INTERMITENTE", "m": 15343.2}, {"n": "A. Los Mimbres", "c": "INTERMITENTE", "m": 15195.9}, {"n": "A. Los Angeles", "c": "FLUJO VIRTUAL", "m": 15123.1}, {"n": "A. Sin Nombre", "c": "FLUJO VIRTUAL", "m": 13186.4}, {"n": "A. Colorado", "c": "FLUJO VIRTUAL", "m": 13113.5}, {"n": "A. Madriles", "c": "FLUJO VIRTUAL", "m": 12765.0}, {"n": "A. Zanjones", "c": "INTERMITENTE", "m": 12250.8}, {"n": "A. El Cuatro", "c": "INTERMITENTE", "m": 11617.1}, {"n": "A. El Bajío", "c": "INTERMITENTE", "m": 11497.4}, {"n": "A. La Carretera", "c": "INTERMITENTE", "m": 10532.5}, {"n": "A. La Viejita", "c": "FLUJO VIRTUAL", "m": 9750.1}, {"n": "A. El Piquete Blanco", "c": "INTERMITENTE", "m": 9594.9}, {"n": "A. Contreras", "c": "INTERMITENTE", "m": 9483.8}, {"n": "A. Cárdenas", "c": "INTERMITENTE", "m": 9456.8}, {"n": "A. Los Mochos", "c": "FLUJO VIRTUAL", "m": 9189.7}, {"n": "A. De Ceballos", "c": "INTERMITENTE", "m": 8566.3}, {"n": "A. Del León", "c": "INTERMITENTE", "m": 8081.3}, {"n": "A. San Antonio", "c": "FLUJO VIRTUAL", "m": 8059.5}, {"n": "A. Las Vacas", "c": "INTERMITENTE", "m": 7626.0}, {"n": "La Majada", "c": "FLUJO VIRTUAL", "m": 7488.8}, {"n": "A. El Mesón", "c": "INTERMITENTE", "m": 7013.8}, {"n": "A. Las Iglesias", "c": "INTERMITENTE", "m": 6960.5}, {"n": "5 de Mayo", "c": "FLUJO VIRTUAL", "m": 6776.3}, {"n": "A. Potrerillos", "c": "FLUJO VIRTUAL", "m": 6366.1}, {"n": "A. Escurridero La Huerta", "c": "FLUJO VIRTUAL", "m": 6261.6}, {"n": "A. Zapatero", "c": "INTERMITENTE", "m": 6258.2}, {"n": "A. El Colorado", "c": "INTERMITENTE", "m": 5574.1}, {"n": "A.La Huerta", "c": "INTERMITENTE", "m": 5442.7}, {"n": "El Duraznillo", "c": "FLUJO VIRTUAL", "m": 4605.6}, {"n": "El Moral", "c": "INTERMITENTE", "m": 4388.9}, {"n": "A. El Zopilote", "c": "FLUJO VIRTUAL", "m": 3908.1}, {"n": "A. El Encino", "c": "INTERMITENTE", "m": 3835.0}, {"n": "A. Del Morro", "c": "INTERMITENTE", "m": 3730.8}, {"n": "A. Del Pueblo", "c": "INTERMITENTE", "m": 3158.3}, {"n": "A. La Trinidad", "c": "FLUJO VIRTUAL", "m": 2971.8}, {"n": "A. La Boquilla", "c": "FLUJO VIRTUAL", "m": 2785.5}, {"n": "A. Pereyra", "c": "INTERMITENTE", "m": 2569.2}, {"n": "A. Guardiana", "c": "INTERMITENTE", "m": 2329.9}, {"n": "A. El jabalí", "c": "FLUJO VIRTUAL", "m": 1999.2}, {"n": "A. del Pueblo", "c": "INTERMITENTE", "m": 1591.9}, {"n": "A. Nueva Imagen", "c": "INTERMITENTE", "m": 748.7}, {"n": "A. El Pueblo", "c": "INTERMITENTE", "m": 370.4}, {"n": "A. Las flores", "c": "INTERMITENTE", "m": 188.1}];
+
+const COND_LABEL = {
+  "INTERMITENTE": "Intermitente",
+  "FLUJO VIRTUAL": "Flujo virtual",
+  "EN OPERACION": "En operación"
+};
+
+const state = {
+  activeConds: new Set(["INTERMITENTE","FLUJO VIRTUAL","EN OPERACION"]),
+  sort: "len",
+  query: "",
+  selected: null
+};
+
+const maxM = Math.max(...DATA.map(d => d.m));
+const coreSampleEl = document.getElementById('coreSample');
+const listBodyEl = document.getElementById('listBody');
+const tooltipEl = document.getElementById('tooltip');
+const ttName = document.getElementById('ttName');
+const ttMeta = document.getElementById('ttMeta');
+const emptyState = document.getElementById('emptyState');
+
+function fmtKm(m){
+  return (m/1000).toLocaleString('es-MX', {minimumFractionDigits:1, maximumFractionDigits:1});
+}
+
+function normalize(str){
+  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+}
+
+// ---- Build core sample (always sorted by length, fixed order) ----
+DATA.forEach((d, i) => {
+  const bar = document.createElement('div');
+  bar.className = 'core-bar';
+  bar.dataset.cond = d.c;
+  bar.dataset.idx = i;
+  const h = Math.max(6, Math.round((d.m / maxM) * 156));
+  bar.style.height = h + 'px';
+  bar.tabIndex = 0;
+  bar.setAttribute('aria-label', d.n + ', ' + fmtKm(d.m) + ' km, ' + COND_LABEL[d.c]);
+
+  bar.addEventListener('mouseenter', (e) => showTooltip(e, d));
+  bar.addEventListener('mousemove', (e) => positionTooltip(e));
+  bar.addEventListener('mouseleave', hideTooltip);
+  bar.addEventListener('focus', (e) => showTooltip(e, d));
+  bar.addEventListener('blur', hideTooltip);
+  bar.addEventListener('click', () => selectArroyo(d.n));
+
+  coreSampleEl.appendChild(bar);
+});
+
+function showTooltip(e, d){
+  ttName.textContent = d.n;
+  ttMeta.textContent = fmtKm(d.m) + ' km · ' + COND_LABEL[d.c];
+  tooltipEl.classList.add('show');
+  positionTooltip(e);
+}
+function positionTooltip(e){
+  const rect = e.target.getBoundingClientRect();
+  tooltipEl.style.left = (rect.left + rect.width/2) + 'px';
+  tooltipEl.style.top = (rect.top - 10) + 'px';
+}
+function hideTooltip(){ tooltipEl.classList.remove('show'); }
+
+function updateCoreDim(){
+  const bars = coreSampleEl.querySelectorAll('.core-bar');
+  const q = normalize(state.query.trim());
+  bars.forEach(bar => {
+    const d = DATA[bar.dataset.idx];
+    const condOk = state.activeConds.has(d.c);
+    const searchOk = !q || normalize(d.n).includes(q);
+    bar.classList.toggle('is-dim', !(condOk && searchOk));
+    bar.classList.toggle('is-active', state.selected === d.n);
+  });
+  document.getElementById('coreCount').textContent =
+    bars.length + ' cauces';
+}
+
+// ---- Build list ----
+function renderList(){
+  let rows = DATA.filter(d => state.activeConds.has(d.c));
+  const q = normalize(state.query.trim());
+  if(q) rows = rows.filter(d => normalize(d.n).includes(q));
+
+  if(state.sort === 'len'){
+    rows = rows.slice().sort((a,b) => b.m - a.m);
+  } else {
+    rows = rows.slice().sort((a,b) => a.n.localeCompare(b.n, 'es'));
+  }
+
+  listBodyEl.innerHTML = '';
+  emptyState.classList.toggle('show', rows.length === 0);
+
+  rows.forEach((d, i) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    if(state.selected === d.n) row.classList.add('is-active');
+    row.tabIndex = 0;
+    row.dataset.name = d.n;
+
+    const pct = Math.max(3, Math.round((d.m / maxM) * 100));
+
+    row.innerHTML = `
+      <span class="row-rank">${String(i+1).padStart(2,'0')}</span>
+      <span class="row-main">
+        <span class="row-name">${d.n}</span>
+        <span class="row-bar-track"><span class="row-bar-fill" data-cond="${d.c}" style="width:${pct}%"></span></span>
+      </span>
+      <span class="row-cond" data-cond="${d.c}">${COND_LABEL[d.c]}</span>
+      <span class="row-km">${fmtKm(d.m)}<span> km</span></span>
+    `;
+    row.addEventListener('click', () => selectArroyo(d.n));
+    listBodyEl.appendChild(row);
+  });
+
+  updateCoreDim();
+}
+
+function selectArroyo(name){
+  state.selected = (state.selected === name) ? null : name;
+  renderList();
+  if(state.selected){
+    const bar = [...coreSampleEl.children].find(b => DATA[b.dataset.idx].n === name);
+    if(bar) bar.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+    const row = [...listBodyEl.children].find(r => r.dataset.name === name);
+    if(row) row.scrollIntoView({behavior:'smooth', block:'nearest'});
+  }
+}
+
+// ---- Controls ----
+document.querySelectorAll('.chip[data-cond]').forEach(chip => {
+  chip.addEventListener('click', () => {
+    const cond = chip.dataset.cond;
+    if(state.activeConds.has(cond)){
+      if(state.activeConds.size === 1) return; // keep at least one active
+      state.activeConds.delete(cond);
+    } else {
+      state.activeConds.add(cond);
+    }
+    chip.classList.toggle('is-active');
+    renderList();
+  });
+});
+
+document.querySelectorAll('.sort-toggle button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-toggle button').forEach(b => b.classList.remove('is-active'));
+    btn.classList.add('is-active');
+    state.sort = btn.dataset.sort;
+    renderList();
+  });
+});
+
+document.getElementById('searchInput').addEventListener('input', (e) => {
+  state.query = e.target.value;
+  renderList();
+});
+
+renderList();
+</script>
+
+</body>
+</html>
